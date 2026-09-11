@@ -1,0 +1,45 @@
+#ifndef ZFORTH_HOST_H
+#define ZFORTH_HOST_H
+
+/*
+ Add this to .c Forth files
+ #include "zforth_host.h"
+ */
+
+#include <stddef.h>
+#include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void zforth_emit(uint8_t c);
+void zforth_type(const char *addr, size_t u);
+void zforth_cr(void);
+void zforth_page(void);
+void zforth_refresh(void);
+
+int32_t zforth_accept(char *addr, int32_t maxcount);
+int32_t zforth_key(void);
+
+/* Returns path length, or 0 if cancelled. Blocks. path_out is not NUL-terminated
+   unless you add one yourself after the returned count. */
+int32_t zforth_open_panel(char *path_out, int32_t maxcount);
+int32_t zforth_save_panel(char *path_out, int32_t maxcount, const char *suggested);
+
+/* Returns byte count, or -1 on error. */
+int32_t zforth_load_file(const char *path, char *addr, int32_t maxcount);
+int32_t zforth_save_file(const char *path, const char *addr, int32_t count);
+
+/* Copies pending editor/source text. Returns 0 if none. Does not block. */
+int32_t zforth_take_source(char *addr, int32_t maxcount);
+
+/* Runs the stand-in outer interpreter. Call from a background thread. */
+void zforth_vm_start(void);
+void zforth_vm_stop(void);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
