@@ -146,6 +146,7 @@ final class ForthSession: ForthHostAPI {
     }
 
     func applyEdit(_ raw: String) async {
+        guard UnsavedChanges.confirmOrSave(session: self) else { return }
         let url: URL?
         if raw.isEmpty {
             url = await openFile(

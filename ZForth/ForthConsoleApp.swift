@@ -19,7 +19,7 @@ struct ForthConsoleApp: App {
         }
         .defaultSize(width: 720, height: 560)
         .defaultPosition(.topTrailing)
-        .defaultLaunchBehavior(.presented)
+        .defaultLaunchBehavior(.suppressed)
 
         .commands {
             FileCommands(session: session)
