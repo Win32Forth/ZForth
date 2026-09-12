@@ -4425,10 +4425,13 @@ ansfile_fth:
     .incbin "ansfile.fth"
 ansfile_fth_end:
 
+// Startup banner: update the date/time stamp when finishing a change set for a
+// version (same policy as 64Forth ConsoleView banner — not every intermediate build).
+// Format: 16Forth M.N ready === Mon D, YYYY H:MM AM/PM ===
 .section __TEXT,__const
 .align 3
 banner:
-    .ascii "16Forth 0.6 ready\n"
+    .ascii "16Forth 0.7 ready === Sep 12, 2026 10:02 AM ===\n"
 .equ banner_len, . - banner
 
 .align 3
