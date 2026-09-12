@@ -24,6 +24,7 @@ void zforth_dir_hook(const char *path, size_t n);
 void zforth_edit_hook(const char *path, size_t n);
 void zforth_fromlib_arm(void);
 void zforth_fromlib_clear(void);
+void zforth_request_quit(void);
 int32_t zforth_get_load_base(char *out, int32_t maxcount);
 
 int32_t zforth_accept(char *addr, int32_t maxcount);

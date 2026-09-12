@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 
 enum ForthCBridge {
@@ -183,6 +184,13 @@ public func zforth_dir_hook(_ path: UnsafePointer<CChar>?, _ n: Int) {
 public func zforth_fromlib_clear() {
     onMainSync {
         ForthCBridge.requireSession().clearFromLib()
+    }
+}
+
+@_cdecl("zforth_request_quit")
+public func zforth_request_quit() {
+    DispatchQueue.main.async {
+        NSApp.terminate(nil)
     }
 }
 

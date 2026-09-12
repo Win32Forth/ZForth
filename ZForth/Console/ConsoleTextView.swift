@@ -2,60 +2,106 @@ import AppKit
 import SwiftUI
 
 struct ConsoleTextView: NSViewRepresentable {
-    var text: String
+    var committed: String
+    var onSubmit: (String) -> Void
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onSubmit: onSubmit)
+    }
 
     func makeNSView(context: Context) -> NSScrollView {
         let scroll = NSScrollView()
         scroll.hasVerticalScroller = true
-        scroll.hasHorizontalScroller = false
-        scroll.autohidesScrollers = true
         scroll.borderType = .noBorder
-        scroll.drawsBackground = true
+        scroll.autohidesScrollers = true
 
-        let textView = NSTextView()
-        textView.isEditable = false
-        textView.isSelectable = true
-        textView.isRichText = false
-        textView.importsGraphics = false
-        textView.allowsUndo = false
-        textView.font = .monospacedSystemFont(ofSize: 13, weight: .regular)
-        textView.textColor = .labelColor
-        textView.backgroundColor = .textBackgroundColor
-        textView.drawsBackground = true
-        textView.isVerticallyResizable = true
-        textView.isHorizontallyResizable = false
-        textView.textContainerInset = NSSize(width: 6, height: 6)
-        textView.minSize = NSSize(width: 0, height: 0)
-        textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude,
-                                  height: CGFloat.greatestFiniteMagnitude)
-
-        if let container = textView.textContainer {
-            container.containerSize = NSSize(width: scroll.contentSize.width,
-                                             height: CGFloat.greatestFiniteMagnitude)
-            container.widthTracksTextView = true
-        }
-
-        textView.autoresizingMask = [.width]
-        scroll.documentView = textView
+        let tv = NSTextView()
+        tv.delegate = context.coordinator
+        tv.isEditable = true
+        tv.isSelectable = true
+        tv.isRichText = false
+        tv.importsGraphics = false
+        tv.allowsUndo = true
+        tv.font = .monospacedSystemFont(ofSize: 13, weight: .regular)
+        tv.textColor = .labelColor
+        tv.backgroundColor = .textBackgroundColor
+        tv.isVerticallyResizable = true
+        tv.isHorizontallyResizable = false
+        tv.textContainerInset = NSSize(width: 6, height: 6)
+        tv.minSize = NSSize(width: 0, height: 0)
+        tv.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude,
+                            height: CGFloat.greatestFiniteMagnitude)
+        tv.textContainer?.widthTracksTextView = true
+        tv.textContainer?.containerSize = NSSize(
+            width: scroll.contentSize.width,
+            height: CGFloat.greatestFiniteMagnitude
+        )
+        tv.autoresizingMask = [.width]
+        scroll.documentView = tv
+        context.coordinator.textView = tv
         return scroll
     }
 
     func updateNSView(_ scroll: NSScrollView, context: Context) {
-        guard let textView = scroll.documentView as? NSTextView else { return }
+        context.coordinator.onSubmit = onSubmit
+        guard let tv = scroll.documentView as? NSTextView else { return }
+        context.coordinator.applyCommitted(committed, in: tv)
+    }
 
-        if textView.string != text {
-            let selected = textView.selectedRanges
-            textView.string = text
-            if selected.contains(where: { $0.rangeValue.length > 0 }) {
-                textView.selectedRanges = selected
-            }
-            textView.scrollToEndOfDocument(nil)
+    final class Coordinator: NSObject, NSTextViewDelegate {
+        var onSubmit: (String) -> Void
+        weak var textView: NSTextView?
+        private var committedUTF16 = 0
+        private var lastCommitted = ""
+        private var keepTail = true
+
+        init(onSubmit: @escaping (String) -> Void) {
+            self.onSubmit = onSubmit
         }
 
-        if let container = textView.textContainer {
-            container.containerSize = NSSize(width: scroll.contentSize.width,
-                                             height: CGFloat.greatestFiniteMagnitude)
+        func applyCommitted(_ committed: String, in tv: NSTextView) {
+            if committed == lastCommitted { return }
+            let tail = keepTail ? currentTail(in: tv) : ""
+            keepTail = true
+            lastCommitted = committed
+            committedUTF16 = (committed as NSString).length
+            tv.string = committed + tail
+            let end = (tv.string as NSString).length
+            tv.setSelectedRange(NSRange(location: end, length: 0))
+            scrollToCaret(tv)
+        }
+
+        private func currentTail(in tv: NSTextView) -> String {
+            let s = tv.string as NSString
+            if s.length <= committedUTF16 { return "" }
+            return s.substring(from: committedUTF16)
+        }
+
+        func textView(_ textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
+            if commandSelector == #selector(NSResponder.insertNewline(_:)) {
+                let line = currentTail(in: textView)
+                    .trimmingCharacters(in: CharacterSet(charactersIn: "\n\r"))
+                keepTail = false
+                onSubmit(line)
+                return true
+            }
+            return false
+        }
+        
+        func textDidChange(_ notification: Notification) {
+            guard let tv = notification.object as? NSTextView else { return }
+            scrollToCaret(tv)
+        }
+
+        func textViewDidChangeSelection(_ notification: Notification) {
+            guard let tv = notification.object as? NSTextView else { return }
+            scrollToCaret(tv)
+        }
+
+        private func scrollToCaret(_ tv: NSTextView) {
+            let r = tv.selectedRange()
+            let loc = min(r.location, (tv.string as NSString).length)
+            tv.scrollRangeToVisible(NSRange(location: loc, length: 0))
         }
     }
 }
-

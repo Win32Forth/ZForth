@@ -109,7 +109,10 @@ void zforth_vm_start(void)
             continue;
         }
 
-        if (n == 3 && memcmp(line, "bye", 3) == 0) break;
+        if (n == 3 && memcmp(line, "bye", 3) == 0) {
+            zforth_request_quit();
+            break;
+        }
         if (n > 0) {
             kernel_eval(line, (size_t)n);
             zforth_cr();

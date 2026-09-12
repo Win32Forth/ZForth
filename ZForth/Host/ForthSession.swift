@@ -136,7 +136,8 @@ final class ForthSession: ForthHostAPI {
     }
 
     func submitConsoleLine(_ line: String) {
-//        writeConsoleLine(line)
+        writeConsole(line)
+        writeConsole("\n")
         if let waiter = inputWaiter {
             inputWaiter = nil
             waiter.resume(returning: line)
