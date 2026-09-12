@@ -1,6 +1,8 @@
 import SwiftUI
+import AppKit
 
 struct ConsoleView: View {
+    @Environment(\.openWindow) private var openWindow
     @Bindable var session: ForthSession
     @State private var inputLine = ""
     @State private var vmStarted = false
@@ -36,7 +38,11 @@ struct ConsoleView: View {
             }
         )
         .onAppear {
+            session.openEditorWindow = { openWindow(id: "editor") }
             ForthCBridge.attach(session)
+            NSApp.activate(ignoringOtherApps: true)
+            NSApp.windows.first(where: { $0.title.contains("Console") })?
+                .makeKeyAndOrderFront(nil)
             guard !vmStarted else { return }
             vmStarted = true
             ForthVMControl.start()

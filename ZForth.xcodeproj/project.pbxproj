@@ -10,21 +10,30 @@
 		000000000000000000000120 /* ZForth.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ZForth.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		FAFCD99C3054A9D800A4CE46 /* Exceptions for "ZForth" folder in "ZForth" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Kernel/ansfile.fth,
+				Kernel/kernel.fth,
+				Resources/AutoLoad/autoload.fth,
+				"Resources/Library/smoke-load.fth",
+				"Resources/Library/xchar-smoke.fth",
+			);
+			target = 000000000000000100000000 /* ZForth */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		000000000000000000000010 /* ZForth */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				FAFCD99C3054A9D800A4CE46 /* Exceptions for "ZForth" folder in "ZForth" target */,
+			);
 			path = ZForth;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
-
-/* Begin PBXFrameworksBuildPhase section */
-		000000000000000130000000 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			files = (
-			);
-		};
-/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		000000000000000000000001 = {
@@ -51,8 +60,8 @@
 			buildConfigurationList = 000000000000000110000000 /* Build configuration list for PBXNativeTarget "ZForth" */;
 			buildPhases = (
 				000000000000000120000000 /* Sources */,
-				000000000000000130000000 /* Frameworks */,
 				000000000000000140000000 /* Resources */,
+				FA6CEBFE3054B4C700DF718C /* Copy Library */,
 			);
 			buildRules = (
 			);
@@ -107,6 +116,49 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		FA6CEBFE3054B4C700DF718C /* Copy Library */ = {
+			isa = PBXShellScriptBuildPhase;
+			name = "Copy Library";
+			shellPath = /bin/sh;
+			shellScript = (
+				"set -e",
+				"",
+				"RES=\"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}\"",
+				"BASE=\"${SRCROOT}/ZForth/Resources\"",
+				"",
+				"copy_tree() {",
+				"  src=\"$1\"",
+				"  dest=\"$2\"",
+				"  rm -rf \"${dest}\"",
+				"  if [ ! -d \"${src}\" ]; then",
+				"    echo \"warning: missing ${src}\"",
+				"    return 0",
+				"  fi",
+				"  mkdir -p \"${dest}\"",
+				"  for f in \"${src}\"/* \"${src}\"/.[!.]* \"${src}\"/..?*; do",
+				"    [ -e \"$f\" ] || continue",
+				"    base=$(basename \"$f\")",
+				"    case \"$base\" in",
+				"      .DS_Store|*.swp|*~|Sources) continue ;;",
+				"    esac",
+				"    if [ -f \"$f\" ]; then",
+				"      cp -f \"$f\" \"${dest}/\"",
+				"    elif [ -d \"$f\" ]; then",
+				"      cp -R \"$f\" \"${dest}/\"",
+				"    fi",
+				"  done",
+				"}",
+				"",
+				"copy_tree \"${BASE}/Library\"  \"${RES}/Library\"",
+				"copy_tree \"${BASE}/Docs\"     \"${RES}/Docs\"",
+				"copy_tree \"${BASE}/AutoLoad\" \"${RES}/AutoLoad\"",
+				"copy_tree \"${BASE}/Autoload\" \"${RES}/Autoload\"",
+				"",
+			);
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		000000000000000120000000 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -121,6 +173,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				APPLETVOS_DEPLOYMENT_TARGET = 27.0;
+				ARCHS = arm64;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
@@ -157,6 +210,7 @@
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				EXCLUDED_ARCHS = x86_64;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -173,7 +227,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = "";
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 14.6;
+				MACOSX_DEPLOYMENT_TARGET = 26.6;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -192,6 +246,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				APPLETVOS_DEPLOYMENT_TARGET = 27.0;
+				ARCHS = arm64;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
@@ -228,6 +283,7 @@
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				EXCLUDED_ARCHS = x86_64;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -238,7 +294,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = "";
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 14.6;
+				MACOSX_DEPLOYMENT_TARGET = 26.6;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PROJECT_UNIQUE_VALUE = JVNG6BZY;
@@ -270,6 +326,7 @@
 				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
 				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
 				ENABLE_RESOURCE_ACCESS_USB = NO;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = ZForth;
@@ -287,7 +344,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
+				MACOSX_DEPLOYMENT_TARGET = 26.6;
 				MARKETING_VERSION = 1.0;
 				"OTHER_CFLAGS[arch=*]" = "-I$(SRCROOT)/ZForth/Kernel";
 				PRODUCT_BUNDLE_IDENTIFIER = "devplaceholder.$(PROJECT_UNIQUE_VALUE:identifier).$(PRODUCT_NAME:identifier)";
@@ -327,6 +384,7 @@
 				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
 				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
 				ENABLE_RESOURCE_ACCESS_USB = NO;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				ENABLE_USER_SELECTED_FILES = readwrite;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = ZForth;
@@ -344,7 +402,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
+				MACOSX_DEPLOYMENT_TARGET = 26.6;
 				MARKETING_VERSION = 1.0;
 				"OTHER_CFLAGS[arch=*]" = "-I$(SRCROOT)/ZForth/Kernel";
 				PRODUCT_BUNDLE_IDENTIFIER = "devplaceholder.$(PROJECT_UNIQUE_VALUE:identifier).$(PRODUCT_NAME:identifier)";

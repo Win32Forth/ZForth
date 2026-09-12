@@ -18,6 +18,9 @@ void zforth_type(const char *addr, size_t u);
 void zforth_cr(void);
 void zforth_page(void);
 void zforth_refresh(void);
+void zforth_fromlib_arm(void);
+void zforth_fromlib_clear(void);
+int32_t zforth_get_load_base(char *out, int32_t maxcount);
 
 int32_t zforth_accept(char *addr, int32_t maxcount);
 int32_t zforth_key(void);

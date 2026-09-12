@@ -6,10 +6,23 @@ import UniformTypeIdentifiers
 @MainActor
 @Observable
 final class ForthSession: ForthHostAPI {
+    var openEditorWindow: (() -> Void)?
     var consoleText: String = ""
     var editorText: String = ""
     var statusLine: String = "Ready"
 
+    var fromLibArmed = false
+    var cwd: URL = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Documents", isDirectory: true)
+    
+    var libraryURL: URL {
+        let base = Bundle.main.resourceURL ?? Bundle.main.bundleURL
+        return base.appendingPathComponent("Library", isDirectory: true)
+    }
+
+    func armFromLib() { fromLibArmed = true }
+    func clearFromLib() { fromLibArmed = false }
+    
     private var inputWaiter: CheckedContinuation<String?, Never>?
     private var unreadLines: [String] = []
 
@@ -52,10 +65,14 @@ final class ForthSession: ForthHostAPI {
         panel.canChooseFiles = true
         panel.canChooseDirectories = false
         panel.allowsMultipleSelection = false
-        guard await panel.begin() == .OK else { return nil }
-        return panel.url
+        panel.directoryURL = fromLibArmed ? libraryURL : cwd
+        let ok = await panel.begin() == .OK
+        if fromLibArmed { clearFromLib() }
+        guard ok, let url = panel.url else { return nil }
+        cwd = url.deletingLastPathComponent()
+        return url
     }
-
+    
     func saveFile(prompt: String, suggestedName: String, types: [String]) async -> URL? {
         let panel = NSSavePanel()
         panel.message = prompt

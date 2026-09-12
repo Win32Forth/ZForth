@@ -11,11 +11,15 @@ struct ForthConsoleApp: App {
                 .onAppear { ForthCBridge.attach(session) }
         }
         .defaultSize(width: 720, height: 480)
+        .defaultPosition(.topLeading)
+        .defaultLaunchBehavior(.presented)
 
         Window("Editor / Debugger", id: "editor") {
             EditorView(session: session)
         }
         .defaultSize(width: 720, height: 560)
+        .defaultPosition(.topTrailing)
+        .defaultLaunchBehavior(.presented)
 
         .commands {
             FileCommands(session: session)

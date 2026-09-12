@@ -109,6 +109,34 @@ public func zforth_key() -> Int32 {
     return Int32(box.value)
 }
 
+@_cdecl("zforth_fromlib_arm")
+public func zforth_fromlib_arm() {
+    onMainSync {
+        ForthCBridge.requireSession().armFromLib()
+    }
+}
+
+@_cdecl("zforth_fromlib_clear")
+public func zforth_fromlib_clear() {
+    onMainSync {
+        ForthCBridge.requireSession().clearFromLib()
+    }
+}
+
+@_cdecl("zforth_get_load_base")
+public func zforth_get_load_base(
+    _ out: UnsafeMutablePointer<CChar>?,
+    _ maxcount: Int32
+) -> Int32 {
+    guard let out, maxcount > 0 else { return 0 }
+    return onMainSync {
+        let session = ForthCBridge.requireSession()
+        let base = session.fromLibArmed ? session.libraryURL : session.cwd
+        session.clearFromLib()
+        return writePath(base.path, to: out, max: Int(maxcount))
+    }
+}
+
 @_cdecl("zforth_open_panel")
 public func zforth_open_panel(_ pathOut: UnsafeMutablePointer<CChar>?, _ maxcount: Int32) -> Int32 {
     precondition(!Thread.isMainThread, "zforth_open_panel cannot run on the main thread")
@@ -118,7 +146,7 @@ public func zforth_open_panel(_ pathOut: UnsafeMutablePointer<CChar>?, _ maxcoun
         Task { @MainActor in
             box.value = await ForthCBridge.requireSession().openFile(
                 prompt: "Open",
-                types: ["fs", "fth", "txt"]
+                types: ["fth", "txt"]
             )
             sem.signal()
         }
@@ -143,7 +171,7 @@ public func zforth_save_panel(
             box.value = await ForthCBridge.requireSession().saveFile(
                 prompt: "Save",
                 suggestedName: name,
-                types: ["fs", "fth", "txt"]
+                types: ["fth", "txt"]
             )
             sem.signal()
         }
