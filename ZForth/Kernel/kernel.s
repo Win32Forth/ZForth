@@ -1741,6 +1741,19 @@ XREFILL:
     DPUSH x0
     NEXT
 
+BOOT_WORD "EDIT", "EDIT ( 'path'|bare -- ) edit pathed file", 0, XEDIT, 1732
+XEDIT:
+    bl   _next_filespec
+    adrp x0, name_buf@page
+    add  x0, x0, name_buf@pageoff
+    adrp x1, include_path_len@page
+    add  x1, x1, include_path_len@pageoff
+    ldr  x1, [x1]
+    SAVE_C_CALLEE
+    bl   _zforth_edit_hook
+    RESTORE_C_CALLEE
+    NEXT
+    
 BOOT_WORD "CHDIR", "CHDIR ( 'path'|bare -- ) change working directory", 0, XCHDIR, 1732
 XCHDIR:
     bl   _next_filespec         // 0 = bare panel

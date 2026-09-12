@@ -116,6 +116,69 @@ public func zforth_fromlib_arm() {
     }
 }
 
+@_cdecl("zforth_edit_hook")
+public func zforth_edit_hook(_ path: UnsafePointer<CChar>?, _ n: Int) {
+    precondition(!Thread.isMainThread, "edit hook cannot run on main")
+    let raw: String = {
+        guard let path, n > 0 else { return "" }
+        return String(
+            bytes: UnsafeRawBufferPointer(start: UnsafeRawPointer(path), count: n),
+            encoding: .utf8
+        ) ?? ""
+    }()
+    let sem = DispatchSemaphore(value: 0)
+    DispatchQueue.main.async {
+        Task { @MainActor in
+            await ForthCBridge.requireSession().applyEdit(raw)
+            sem.signal()
+        }
+    }
+    sem.wait()
+}
+
+@_cdecl("zforth_chdir_hook")
+public func zforth_chdir_hook(_ path: UnsafePointer<CChar>?, _ n: Int) {
+    precondition(!Thread.isMainThread)
+    let raw: String = {
+        guard let path, n > 0 else { return "" }
+        return String(bytes: UnsafeRawBufferPointer(start: UnsafeRawPointer(path), count: n), encoding: .utf8) ?? ""
+    }()
+    let sem = DispatchSemaphore(value: 0)
+    DispatchQueue.main.async {
+        Task { @MainActor in
+            await ForthCBridge.requireSession().applyChdir(raw)
+            sem.signal()
+        }
+    }
+    sem.wait()
+}
+
+@_cdecl("zforth_pwd_hook")
+public func zforth_pwd_hook() {
+    onMainSync {
+        let session = ForthCBridge.requireSession()
+        session.type(session.cwd.path)
+        session.cr()
+    }
+}
+
+@_cdecl("zforth_dir_hook")
+public func zforth_dir_hook(_ path: UnsafePointer<CChar>?, _ n: Int) {
+    precondition(!Thread.isMainThread)
+    let raw: String = {
+        guard let path, n > 0 else { return "" }
+        return String(bytes: UnsafeRawBufferPointer(start: UnsafeRawPointer(path), count: n), encoding: .utf8) ?? ""
+    }()
+    let sem = DispatchSemaphore(value: 0)
+    DispatchQueue.main.async {
+        Task { @MainActor in
+            await ForthCBridge.requireSession().applyDir(raw)
+            sem.signal()
+        }
+    }
+    sem.wait()
+}
+
 @_cdecl("zforth_fromlib_clear")
 public func zforth_fromlib_clear() {
     onMainSync {

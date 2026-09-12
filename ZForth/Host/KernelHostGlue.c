@@ -89,6 +89,9 @@ void zforth_vm_start(void)
     kernel_set_load_file(host_load_file);
     kernel_set_fromlib(zforth_fromlib_arm);
     kernel_set_fromlib_clear(zforth_fromlib_clear);
+    kernel_set_chdir(zforth_chdir_hook);
+    kernel_set_pwd(zforth_pwd_hook);
+    kernel_set_dir(zforth_dir_hook);
     kernel_cold_start();
 
     while (g_running) {

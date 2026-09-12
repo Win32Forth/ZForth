@@ -43,6 +43,73 @@ final class ForthSession: ForthHostAPI {
     func armFromLib() { fromLibArmed = true }
     func clearFromLib() { fromLibArmed = false }
     
+    func pathString(_ path: UnsafePointer<CChar>?, _ n: Int) -> String {
+        guard let path, n > 0 else { return "" }
+        return String(bytes: UnsafeRawBufferPointer(start: UnsafeRawPointer(path), count: n), encoding: .utf8) ?? ""
+    }
+
+    func resolveDir(_ raw: String) -> URL? {
+        if raw.isEmpty { return nil }
+        if raw.hasPrefix("/") { return URL(fileURLWithPath: raw, isDirectory: true) }
+        return cwd.appendingPathComponent(raw, isDirectory: true)
+    }
+
+    func applyChdir(_ raw: String) async {
+        let url: URL?
+        if raw.isEmpty {
+            url = await pickFolder(prompt: "Change directory")
+        } else {
+            url = resolveDir(raw)
+        }
+        guard let url else {
+            type("chdir cancelled")
+            cr()
+            return
+        }
+        var isDir: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir), isDir.boolValue else {
+            type("can't chdir: \(url.path)")
+            cr()
+            return
+        }
+        cwd = url.standardizedFileURL
+        fromLibArmed = false
+    }
+
+    func applyDir(_ raw: String) async {
+        let url: URL?
+        if raw.isEmpty {
+            url = fromLibArmed ? libraryURL : cwd
+            fromLibArmed = false
+        } else {
+            url = resolveDir(raw)
+        }
+        guard let url else { return }
+        do {
+            let names = try FileManager.default.contentsOfDirectory(atPath: url.path).sorted()
+            type(url.path)
+            cr()
+            for name in names where !name.hasPrefix(".") {
+                type(name)
+                cr()
+            }
+        } catch {
+            type("can't dir: \(error.localizedDescription)")
+            cr()
+        }
+    }
+
+    func pickFolder(prompt: String) async -> URL? {
+        let panel = NSOpenPanel()
+        panel.message = prompt
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.directoryURL = cwd
+        guard await panel.begin() == .OK else { return nil }
+        return panel.url
+    }
+    
     private var inputWaiter: CheckedContinuation<String?, Never>?
     private var unreadLines: [String] = []
 
@@ -78,6 +145,38 @@ final class ForthSession: ForthHostAPI {
         }
     }
 
+    func applyEdit(_ raw: String) async {
+        let url: URL?
+        if raw.isEmpty {
+            url = await openFile(
+                prompt: fromLibArmed ? "Edit Library file" : "Edit file",
+                types: ["fs", "fth", "txt"]
+            )
+            // openFile already uses fromLibArmed / cwd for the panel
+        } else if raw.hasPrefix("/") {
+            url = URL(fileURLWithPath: raw)
+        } else {
+            let base = fromLibArmed ? libraryURL : cwd
+            fromLibArmed = false
+            url = base.appendingPathComponent(raw)
+        }
+
+        guard let url else { return }
+
+        do {
+            let text = try loadText(from: url)
+            editorText = text
+            editorURL = url
+            cwd = url.deletingLastPathComponent()
+            markEditorSaved()
+            statusLine = "Editing \(url.lastPathComponent)"
+            openEditorWindow?()
+        } catch {
+            type("can't edit: \(url.path)")
+            cr()
+        }
+    }
+    
     func openFile(prompt: String, types: [String]) async -> URL? {
         let panel = NSOpenPanel()
         panel.message = prompt
