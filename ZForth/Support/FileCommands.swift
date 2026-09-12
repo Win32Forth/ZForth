@@ -34,6 +34,7 @@ struct FileCommands: Commands {
     
     @MainActor
     private func openIntoEditor() async {
+        guard UnsavedChanges.confirmOrSave(session: session) else { return }
         guard let url = await session.openFile(
             prompt: "Open Forth source",
             types: ["fth", "txt"]
@@ -45,6 +46,7 @@ struct FileCommands: Commands {
             session.cwd = url.deletingLastPathComponent()
             session.statusLine = "Loaded \(url.lastPathComponent)"
             session.openEditorWindow?()
+            session.markEditorSaved()
         } catch {
             session.statusLine = "Load failed: \(error.localizedDescription)"
         }
@@ -75,6 +77,7 @@ struct FileCommands: Commands {
             do {
                 try session.saveText(session.editorText, to: url)
                 session.statusLine = "Saved \(url.lastPathComponent)"
+                session.markEditorSaved()
             } catch {
                 session.statusLine = "Save failed: \(error.localizedDescription)"
             }
@@ -96,6 +99,7 @@ struct FileCommands: Commands {
             session.editorURL = url
             session.cwd = url.deletingLastPathComponent()
             session.statusLine = "Saved \(url.lastPathComponent)"
+            session.markEditorSaved()
         } catch {
             session.statusLine = "Save failed: \(error.localizedDescription)"
         }

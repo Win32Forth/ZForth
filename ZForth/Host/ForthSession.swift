@@ -6,13 +6,32 @@ import UniformTypeIdentifiers
 @MainActor
 @Observable
 final class ForthSession: ForthHostAPI {
+    let editorWindowDelegate = EditorWindowDelegate()
+    
     var openEditorWindow: (() -> Void)?
     var consoleText: String = ""
     var editorText: String = ""
     var statusLine: String = "Ready"
     var editorURL: URL?
-    
     var fromLibArmed = false
+    
+    var editorSavedText: String = ""
+
+    var isEditorDirty: Bool {
+        editorText != editorSavedText
+    }
+
+    var editorWindowTitle: String {
+        let file = editorURL?.lastPathComponent ?? "untitled.fth"
+        let shown = file.count <= 32 ? file : String(file.suffix(32))
+        let mark = isEditorDirty ? "*" : ""
+        return "Editor / Debugger  \(shown)\(mark)"
+    }
+
+    func markEditorSaved() {
+        editorSavedText = editorText
+    }
+    
     var cwd: URL = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Documents", isDirectory: true)
     
