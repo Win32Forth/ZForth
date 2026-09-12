@@ -163,7 +163,7 @@ public func zforth_save_panel(
     _ suggested: UnsafePointer<CChar>?
 ) -> Int32 {
     precondition(!Thread.isMainThread, "zforth_save_panel cannot run on the main thread")
-    let name = suggested.map { String(cString: $0) } ?? "program.fs"
+    let name = suggested.map { String(cString: $0) } ?? "Untitled.fth"
     let box = Box<URL?>(nil)
     let sem = DispatchSemaphore(value: 0)
     DispatchQueue.main.async {

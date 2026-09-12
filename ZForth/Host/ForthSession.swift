@@ -10,7 +10,8 @@ final class ForthSession: ForthHostAPI {
     var consoleText: String = ""
     var editorText: String = ""
     var statusLine: String = "Ready"
-
+    var editorURL: URL?
+    
     var fromLibArmed = false
     var cwd: URL = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Documents", isDirectory: true)
@@ -76,8 +77,9 @@ final class ForthSession: ForthHostAPI {
     func saveFile(prompt: String, suggestedName: String, types: [String]) async -> URL? {
         let panel = NSSavePanel()
         panel.message = prompt
-        panel.nameFieldStringValue = suggestedName
         panel.allowedContentTypes = types.compactMap { UTType(filenameExtension: $0) }
+        let base = (suggestedName as NSString).deletingPathExtension
+        panel.nameFieldStringValue = base.isEmpty ? suggestedName : base
         guard await panel.begin() == .OK else { return nil }
         return panel.url
     }
