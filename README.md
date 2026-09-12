@@ -1,8 +1,8 @@
 # ZForth
 
-**Yet Another Forth Of The Week (YAFOTW)** — a macOS SwiftUI host for a small ARM64 Forth kernel.
+**ZForth** is a macOS SwiftUI host and a small ARM64 Forth kernel.
 
-ZForth is a console + editor application that embeds the **16Forth** kernel lineage (native ARM64 assembly + high-level Forth). It is not related to [zevv/zForth](https://github.com/zevv/zForth); the name is local to this YAFOTW series.
+ZForth was started as a console + editor application that embeds the **16Forth** kernel lineage (native ARM64 assembly + high-level Forth). The name ZForth is one of Tom Zimmer's Forths created with the assistance of Grok, and Grok Build.
 
 **Current version:** 0.7  
 **Console / kernel banner:** `16Forth 0.7 ready === Sep 12, 2026 10:02 AM ===`
