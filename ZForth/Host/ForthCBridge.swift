@@ -4,6 +4,11 @@ import Foundation
 enum ForthCBridge {
     static weak var session: ForthSession?
 
+    /// Headless agent: when set, EMIT/TYPE/CR go here instead of the GUI session.
+    static var agentSink: ((String) -> Void)?
+
+    static var isAgent: Bool { agentSink != nil }
+
     static func attach(_ session: ForthSession) {
         self.session = session
     }
@@ -14,6 +19,17 @@ enum ForthCBridge {
             fatalError("ForthCBridge.attach(_:) was not called")
         }
         return session
+    }
+
+    /// Console output for GUI or agent.
+    static func writeOut(_ text: String) {
+        if let agentSink {
+            agentSink(text)
+            return
+        }
+        onMainSync {
+            requireSession().type(text)
+        }
     }
 }
 
@@ -31,8 +47,32 @@ private final class Box<T> {
     init(_ value: T) { self.value = value }
 }
 
+// BIG-INTEGER host trampolines (registered from KernelHostGlue).
+@_cdecl("zforth_bi_mul")
+public func zforth_bi_mul(_ a: Int64, _ b: Int64, _ r: Int64) {
+    BigIntHost.mul(a: a, b: b, r: r)
+}
+
+@_cdecl("zforth_bi_divmod")
+public func zforth_bi_divmod(_ num: Int64, _ den: Int64, _ quot: Int64, _ rem: Int64) {
+    BigIntHost.divmod(num: num, den: den, quot: quot, rem: rem)
+}
+
+@_cdecl("zforth_bi_isqrt")
+public func zforth_bi_isqrt(_ a: Int64, _ r: Int64) {
+    BigIntHost.isqrt(a: a, r: r)
+}
+
 @_cdecl("zforth_emit")
 public func zforth_emit(_ c: UInt8) {
+    if ForthCBridge.isAgent {
+        if c == 10 || c == 13 {
+            ForthCBridge.writeOut("\n")
+        } else if let scalar = UnicodeScalar(UInt32(c)) {
+            ForthCBridge.writeOut(String(Character(scalar)))
+        }
+        return
+    }
     onMainSync {
         ForthCBridge.requireSession().emit(c)
     }
@@ -47,6 +87,10 @@ public func zforth_type(_ addr: UnsafePointer<CChar>?, _ u: Int) {
         Character(UnicodeScalar(byte))
     })
 
+    if ForthCBridge.isAgent {
+        ForthCBridge.writeOut(string)
+        return
+    }
     onMainSync {
         ForthCBridge.requireSession().type(string)
     }
@@ -54,6 +98,10 @@ public func zforth_type(_ addr: UnsafePointer<CChar>?, _ u: Int) {
 
 @_cdecl("zforth_cr")
 public func zforth_cr() {
+    if ForthCBridge.isAgent {
+        ForthCBridge.writeOut("\n")
+        return
+    }
     onMainSync {
         ForthCBridge.requireSession().cr()
     }
@@ -61,6 +109,10 @@ public func zforth_cr() {
 
 @_cdecl("zforth_page")
 public func zforth_page() {
+    if ForthCBridge.isAgent {
+        ForthCBridge.writeOut("\n")
+        return
+    }
     onMainSync {
         ForthCBridge.requireSession().page()
     }
@@ -68,6 +120,7 @@ public func zforth_page() {
 
 @_cdecl("zforth_refresh")
 public func zforth_refresh() {
+    if ForthCBridge.isAgent { return }
     onMainSync {
         ForthCBridge.requireSession().requestScreenRefresh()
     }

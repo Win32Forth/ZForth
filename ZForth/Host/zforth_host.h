@@ -27,6 +27,11 @@ void zforth_fromlib_clear(void);
 void zforth_request_quit(void);
 int32_t zforth_get_load_base(char *out, int32_t maxcount);
 
+/* BIG-INTEGER host (pointers are ALLOCATE'd BI blocks). */
+void zforth_bi_mul(int64_t a, int64_t b, int64_t r);
+void zforth_bi_divmod(int64_t num, int64_t den, int64_t quot, int64_t rem);
+void zforth_bi_isqrt(int64_t a, int64_t r);
+
 int32_t zforth_accept(char *addr, int32_t maxcount);
 int32_t zforth_key(void);
 
@@ -45,6 +50,13 @@ int32_t zforth_take_source(char *addr, int32_t maxcount);
 /* Runs the stand-in outer interpreter. Call from a background thread. */
 void zforth_vm_start(void);
 void zforth_vm_stop(void);
+
+/* Headless agent channel: cold start once, then kernel_eval without ACCEPT. */
+int zforth_agent_start(void);
+int zforth_agent_eval(const char *line, size_t n);
+int zforth_agent_depth(void);
+void zforth_agent_hexdump(const void *addr, size_t n);
+int zforth_agent_dump_tos_cfa(size_t n);
 
 #ifdef __cplusplus
 }

@@ -1,0 +1,43 @@
+#!/bin/sh
+# zforth-agent — run ZForth headless agent channel (load files, capture output).
+# Public domain.
+#
+# Usage:
+#   ./tools/zforth-agent -e '2 2 + .'
+#   ./tools/zforth-agent -e ': 1+ 1 + ; 5 1+ .'
+#   ./tools/zforth-agent -c ~/Documents/XCodeProjects/ZForth -f smoke.fth -o /tmp/out.txt
+#   ./tools/zforth-agent --help
+#
+# Resolves the app binary from (first hit):
+#   ZFORTH_APP        — path to ZForth.app or the MacOS/ZForth binary
+#   /Applications/ZForth.app
+#   DerivedData Debug build (if present)
+
+set -e
+
+resolve_bin() {
+  if [ -n "${ZFORTH_APP:-}" ]; then
+    if [ -x "${ZFORTH_APP}" ] && [ ! -d "${ZFORTH_APP}" ]; then
+      echo "${ZFORTH_APP}"
+      return
+    fi
+    if [ -x "${ZFORTH_APP}/Contents/MacOS/ZForth" ]; then
+      echo "${ZFORTH_APP}/Contents/MacOS/ZForth"
+      return
+    fi
+  fi
+  if [ -x "/Applications/ZForth.app/Contents/MacOS/ZForth" ]; then
+    echo "/Applications/ZForth.app/Contents/MacOS/ZForth"
+    return
+  fi
+  dd=$(ls -d "$HOME/Library/Developer/Xcode/DerivedData"/ZForth-*/Build/Products/Debug/ZForth.app/Contents/MacOS/ZForth 2>/dev/null | head -1)
+  if [ -n "$dd" ] && [ -x "$dd" ]; then
+    echo "$dd"
+    return
+  fi
+  echo "zforth-agent: cannot find ZForth binary. Build in Xcode, or set ZFORTH_APP=…/ZForth.app" >&2
+  exit 127
+}
+
+BIN=$(resolve_bin)
+exec "$BIN" --agent "$@"
